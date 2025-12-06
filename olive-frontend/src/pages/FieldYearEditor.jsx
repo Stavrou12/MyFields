@@ -6,8 +6,13 @@ import api from "../services/api";
 const API_BASE_URL = api.defaults.baseURL || "http://localhost:5000";
 
 export default function FieldYearEditor() {
+  const [previewImage, setPreviewImage] = useState(null);
+
   const { id: fieldId, year } = useParams();
   const navigate = useNavigate();
+
+
+
 
   const [loading, setLoading] = useState(true);
   const [field, setField] = useState(null);
@@ -18,7 +23,9 @@ export default function FieldYearEditor() {
     sprayings: [],
     summary: null
   });
-
+  useEffect(() => {
+  refreshModalMedia();
+}, [history]);
   const [editingYield, setEditingYield] = useState(null);
   const [editingFert, setEditingFert] = useState(null);
   const [editingPrune, setEditingPrune] = useState(null);
@@ -117,6 +124,20 @@ export default function FieldYearEditor() {
     }
   }
 
+  function refreshModalMedia() {
+  if (!mediaModal.open) return;
+
+  const key = getCollectionKey(mediaModal.type);
+  if (!key) return;
+
+  const recArray = history[key] || [];
+  const rec = recArray.find((r) => r._id === mediaModal.recordId);
+
+  setMediaModal(prev => ({
+    ...prev,
+    list: rec?.media || []
+  }));
+}
   // Open modal for a specific record & type (oil, fertilization, pruning, spraying)
   const openMediaModal = (recordId, recordType) => {
     const key = getCollectionKey(recordType);
@@ -175,6 +196,7 @@ await api.post(
       }
 
       await load();
+      refreshModalMedia();
 
     } catch (err) {
       console.error("Upload media error:", err);
@@ -190,6 +212,7 @@ await api.post(
   `/fields/${fieldId}/${t}/${mediaModal.recordId}/media/${mediaId}`
 );
       await load();
+      refreshModalMedia();
 
     } catch (err) {
       console.error("Delete media error:", err);
@@ -1022,6 +1045,8 @@ function normalizeType(t) {
 
 
 function MediaModal({ open, onClose, media, onDelete, onUpload, apiBase }) {
+  const [previewImage, setPreviewImage] = useState(null);
+
   if (!open) return null;
 
   return (
@@ -1063,7 +1088,8 @@ function MediaModal({ open, onClose, media, onDelete, onUpload, apiBase }) {
                   <img
                     src={src}
                     alt=""
-                    className="rounded w-full max-h-40 object-cover"
+                    className="rounded w-full max-h-40 object-cover cursor-pointer"
+                    onClick={() => setPreviewImage(src)}
                   />
                 )}
 
@@ -1078,6 +1104,20 @@ function MediaModal({ open, onClose, media, onDelete, onUpload, apiBase }) {
           })}
         </div>
       </div>
+
+      {/* Fullscreen preview */}
+      {previewImage && (
+        <div
+          className="fixed inset-0 bg-black/80 flex items-center justify-center z-50"
+          onClick={() => setPreviewImage(null)}
+        >
+          <img
+            src={previewImage}
+            className="max-w-[90vw] max-h-[90vh] rounded shadow-lg"
+          />
+        </div>
+      )}
     </div>
   );
 }
+

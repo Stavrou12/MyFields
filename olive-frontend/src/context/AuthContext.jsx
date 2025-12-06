@@ -25,7 +25,7 @@ const login = async (email, password) => {
   console.log("📤 Sending login:", { email, password });
   const res = await API.post("/auth/login", { email, password });
   console.log("📥 Got response:", res.data);
- // localStorage.setItem("token", res.data.token);
+  localStorage.setItem("token", res.data.token);
   //localStorage.setItem("user", JSON.stringify(res.data.user));
   localStorage.setItem("user", JSON.stringify(res.data)); // ← store token + user
   setUser(res.data);

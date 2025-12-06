@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import MediaUpload from "../components/MediaUpload";
 
+
 export default function MyFields() {
   const [fields, setFields] = useState([]);
   const [stats, setStats] = useState({});
@@ -21,6 +22,7 @@ export default function MyFields() {
 
   async function loadFields() {
     try {
+      
       const res = await api.get("/fields");
       const allFields = res.data;
       setFields(allFields);

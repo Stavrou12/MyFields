@@ -1,19 +1,25 @@
 import axios from "axios";
 
-const API = axios.create({
-  baseURL: "http://localhost:5000",
+const api = axios.create({
+  baseURL: "http://localhost:5000", // your backend URL
 });
 
-// ✅ Read token from new shape { token, user }
-API.interceptors.request.use((req) => {
-  const raw = localStorage.getItem("user");
-  if (raw) {
-    try {
-      const data = JSON.parse(raw); // { token, user }
-      if (data.token) req.headers.Authorization = data.token;
-    } catch {}
+// Attach token automatically
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
-  return req;
+  return config;
 });
 
-export default API;
+api.interceptors.request.use((config) => {
+  console.log("📡 Sending request:", config.url, "token:", localStorage.getItem("token"));
+  const token = localStorage.getItem("token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+export default api;
