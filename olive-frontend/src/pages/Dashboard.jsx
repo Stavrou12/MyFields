@@ -16,17 +16,6 @@ export default function Dashboard() {
   const { logout } = useContext(AuthContext);
   return (
     <div className="max-w-4xl mx-auto">
-       <div className="flex justify-end mb-4">
-        <button
-          onClick={() => {
-            logout();
-            window.location.href = "/login"; // hard redirect
-          }}
-          className="bg-green-800 text-white px-3 py-1 rounded"
-        >
-          Logout
-        </button>
-      </div>
       <h2 className="text-2xl font-bold text-green-800 mb-4">Dashboard</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <a href="/my-fields" className="bg-green-600 text-white p-6 rounded-lg hover:bg-green-700">
