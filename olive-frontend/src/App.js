@@ -7,7 +7,6 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import MyFields from "./pages/MyFields";
 import AddField from "./pages/AddField";
-import FieldDetail from "./pages/FieldDetail";
 import MapPage from "./pages/MapPage";
 import FieldYearEditor from "./pages/FieldYearEditor";
 
@@ -39,7 +38,7 @@ function App() {
         <Route path="/" element={<Dashboard />} />
         <Route path="/my-fields" element={<MyFields />} />
         <Route path="/add-field" element={<AddField />} />
-        <Route path="/field/:id" element={<FieldDetail />} />
+        
         <Route path="/map" element={<MapPage />} />
         <Route path="/fields/:id/year/:year" element={<FieldYearEditor />} />
 
@@ -49,7 +48,17 @@ function App() {
       </Route>
 
       {/* Catch-all redirect */}
-      <Route path="*" element={<Navigate to="/login" replace />} />
+      <Route
+  element={
+    user ? (
+      <Layout>
+        <Outlet />
+      </Layout>
+    ) : (
+      <Navigate to="/login" replace />
+    )
+  }
+></Route>
     </Routes>
   );
 }

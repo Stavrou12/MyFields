@@ -407,12 +407,12 @@ await api.post(
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
-      <button
-        onClick={() => navigate(`/fields/${fieldId}`)}
-        className="text-green-600 mb-4"
-      >
-        ← Back
-      </button>
+<button
+  onClick={() => navigate("/my-fields")}
+  className="mb-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+>
+  ← Back to My Fields
+</button>
       <h1 className="text-3xl font-bold">{field.name}</h1>
       <h2 className="text-lg text-gray-600 mb-6">Year: {year}</h2>
 
