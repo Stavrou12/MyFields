@@ -10,3 +10,92 @@
   --color-green-700: #15803d;
   --color-green-800: #166534;
 }
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=Inter:wght@300;400;500;600&display=swap');
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: #FAF8F2;
+  color: #4A3B2D;
+  margin: 0;
+}
+
+/* Titles */
+h1, h2, h3 {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 600;
+  color: #4A3B2D;
+}
+
+/* Section card */
+.section-card {
+  background: white;
+  border-radius: 18px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.06);
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Nested item cards */
+.item-card {
+  background: #FFFFFF;
+  border-radius: 12px;
+  padding: 0.85rem;
+  margin-bottom: 0.75rem;
+  border: 1px solid #E9E4D9;
+}
+
+/* Editor cards */
+.editor-card {
+  background: #F7F4EF;
+  border-radius: 12px;
+  padding: 0.85rem;
+  margin-bottom: 0.75rem;
+}
+
+/* Buttons */
+.btn-green {
+  background: #7EA45A;
+  color: white;
+  border-radius: 10px;
+}
+
+.btn-green:hover {
+  background: #6F944E;
+}
+
+.btn-gray {
+  background: #E5E1DA;
+}
+
+.btn-red {
+  background: #C96051;
+  color: white;
+}
+
+/* Input */
+input {
+  border-radius: 10px !important;
+  border: 1px solid #DDDACF;
+}
+
+/* Faux blocks */
+.block-yellow {
+  background: #FFF7E4;
+  color: #A98A1E;
+  border-radius: 14px;
+  padding: 0.75rem;
+}
+
+.block-green {
+  background: #EEF6E9;
+  color: #51803C;
+  border-radius: 14px;
+  padding: 0.75rem;
+}
+
+.block-gray {
+  background: #F7F4EF;
+  color: #A3816A;
+  border-radius: 14px;
+  padding: 0.75rem;
+}

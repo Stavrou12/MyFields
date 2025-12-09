@@ -6,6 +6,7 @@ import api from "../services/api";
 const API_BASE_URL = api.defaults.baseURL || "http://localhost:5000";
 
 export default function FieldYearEditor() {
+  // eslint-disable-next-line no-unused-vars
   const [previewImage, setPreviewImage] = useState(null);
 
   const { id: fieldId, year } = useParams();
@@ -25,6 +26,7 @@ export default function FieldYearEditor() {
   });
   useEffect(() => {
   refreshModalMedia();
+// eslint-disable-next-line react-hooks/exhaustive-deps
 }, [history]);
   const [editingYield, setEditingYield] = useState(null);
   const [editingFert, setEditingFert] = useState(null);
@@ -175,7 +177,7 @@ export default function FieldYearEditor() {
         // 1) Upload file to /upload/media  (field name MUST be "media")
         const form = new FormData();
         form.append("media", file);
-        form.append("fieldId", fieldId);
+       // form.append("fieldId", fieldId);
         form.append("gps", JSON.stringify({}));
 
         const upload = await api.post("/upload/media", form, {
@@ -470,7 +472,9 @@ await api.post(
         {history.yields.length === 0 && (
           <p className="text-gray-500">No yields for this year.</p>
         )}
-        {history.yields.map((y) =>
+        {[...history.yields]
+  .sort((a, b) => new Date(b.date) - new Date(a.date))
+  .map((y) =>
           editingYield === y._id ? (
             <EditorCard key={y._id}>
               <EditInput
@@ -966,12 +970,13 @@ await api.post(
 
 function Section({ title, children }) {
   return (
-    <div className="bg-white shadow rounded-lg p-5 mb-8">
-      <h3 className="text-xl font-semibold mb-4">{title}</h3>
+    <div className="section-card">
+      <h3 className="text-2xl mb-3">{title}</h3>
       {children}
     </div>
   );
 }
+
 
 function Row({ children }) {
   return (
@@ -993,7 +998,7 @@ function SaveBtn({ onClick }) {
   return (
     <button
       onClick={onClick}
-      className="mt-3 bg-green-600 text-white px-4 py-2 rounded-lg"
+      className="mt-8 btn-green px-5 py-2 font-medium"
     >
       Save
     </button>
@@ -1004,13 +1009,12 @@ function SmallBtn({ onClick, children, green, red }) {
   return (
     <button
       onClick={onClick}
-      className={`px-3 py-1 rounded text-sm ${
-        green
-          ? "bg-green-600 text-white"
-          : red
-          ? "bg-red-600 text-white"
-          : "bg-gray-300"
-      }`}
+      className={`px-3 py-1 text-sm rounded ${
+  green ? "btn-green" :
+  red ? "btn-red" :
+  "btn-gray"
+}`}
+
     >
       {children}
     </button>
@@ -1022,11 +1026,12 @@ function BtnRow({ children }) {
 }
 
 function ItemCard({ children }) {
-  return <div className="border rounded p-3 mb-3">{children}</div>;
+  return <div className="item-card">{children}</div>;
 }
 
+
 function EditorCard({ children }) {
-  return <div className="border rounded p-3 bg-gray-50 mb-3">{children}</div>;
+  return <div className="editor-card">{children}</div>;
 }
 
 /* --------------------------
@@ -1111,13 +1116,15 @@ function MediaModal({ open, onClose, media, onDelete, onUpload, apiBase }) {
           className="fixed inset-0 bg-black/80 flex items-center justify-center z-50"
           onClick={() => setPreviewImage(null)}
         >
-          <img
-            src={previewImage}
-            className="max-w-[90vw] max-h-[90vh] rounded shadow-lg"
-          />
+         <img
+  src={previewImage}
+  alt=""
+  className="rounded max-w-[90vw] max-h-[90vh] rounded shadow-lg object-cover cursor-pointer"
+  onClick={() => setPreviewImage(previewImage)}
+/>
+
         </div>
       )}
     </div>
   );
 }
-

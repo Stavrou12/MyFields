@@ -1,59 +1,79 @@
 const router = require("express").Router();
 const multer = require("multer");
-const path = require("path");
 const fs = require("fs");
 const auth = require("../middleware/auth");
 const Photo = require("../models/Photo");
+const cloudinary = require("../config/cloudinary");
 
-const uploadsDir = path.join(process.cwd(), "uploads");
-
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
+// -------------------------------
+// Ensure TEMP folder exists
+// -------------------------------
+if (!fs.existsSync("temp")) {
+  fs.mkdirSync("temp");
 }
 
-// ensure uploads folder exists once at start
+// Store uploaded file temporarily
+const upload = multer({ dest: "temp/" });
 
+/* ========================================================
+    UPLOAD MEDIA
+    POST /upload/media
+    auth required
 
-// disk storage
-const storage = multer.diskStorage({
-  destination: (_, __, cb) => cb(null, uploadsDir),
-  filename:    (_, file, cb) => cb(null, Date.now() + path.extname(file.originalname)),
-});
-const upload = multer({ storage });
-
-/* ----------  UPLOAD MEDIA  ----------
-  POST /upload/media
-  auth required
-  form-data :
-    media   : file (image/* or video/*)
-    fieldId : string
-    gps     : JSON string  {lat, lng}
---------------------------------------*/
+    form-data:
+      media   : file
+      fieldId : optional (string)
+      gps     : JSON string {lat,lng}
+======================================================== */
 router.post("/media", auth, upload.single("media"), async (req, res) => {
   try {
+    // No file?
     if (!req.file) return res.status(400).json({ msg: "No file uploaded" });
 
-    const isVideo = req.file.mimetype.startsWith("video/");
+    // Parse GPS JSON or default empty
     const gps = JSON.parse(req.body.gps || "{}");
 
-    const doc = await Photo.create({
-      fieldId: req.body.fieldId,
-      url: `/uploads/${req.file.filename}`,
-      gps,
-      isVideo,
+    // Upload to Cloudinary from temp location
+    const result = await cloudinary.uploader.upload(req.file.path, {
+      resource_type: "auto", // images + videos
+      folder: "MyFields"
     });
 
-    res.json(doc);
-  }catch (err) {
-  console.error("Upload error:", err);
-  res.status(500).json({ msg: err.message }); // send JSON, not HTML
-}
+    // Remove temp file
+    fs.unlinkSync(req.file.path);
+
+    const url = result.secure_url;
+    const isVideo = result.resource_type === "video";
+
+    // -------------------------------
+    // If uploaded for a FIELD → Save to Photo DB
+    // -------------------------------
+    if (req.body.fieldId) {
+      const doc = await Photo.create({
+        fieldId: req.body.fieldId,
+        url,
+        gps,
+        isVideo
+      });
+
+      return res.json(doc);
+    }
+
+    // -------------------------------
+    // If uploaded for a RECORD → Send only media info
+    // -------------------------------
+    return res.json({ url, isVideo });
+
+  } catch (err) {
+    console.error("Upload error:", err);
+    res.status(500).json({ msg: err.message });
+  }
 });
 
-/* ----------  LIST ALL MEDIA  ----------
-  GET /upload/photos
-  no auth required (public read)
---------------------------------------*/
+/* ========================================================
+    GET ALL MEDIA
+    GET /upload/photos
+======================================================== */
 router.get("/photos", async (_req, res) => {
   try {
     const photos = await Photo.find().lean();
@@ -63,21 +83,5 @@ router.get("/photos", async (_req, res) => {
     res.status(500).json({ msg: "Fetch failed" });
   }
 });
-
-
-
-// upload for record media
-router.post("/photos", upload.single("file"), async (req, res) => {
-  if (!req.file) return res.status(400).json({ msg: "No file uploaded" });
-
-  const isVideo = req.file.mimetype.startsWith("video/");
-
-  res.json({
-  url: `${req.protocol}://${req.get("host")}/uploads/${filename}`,
-  isVideo: false
-});
-});
-
-
 
 module.exports = router;
