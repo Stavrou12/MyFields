@@ -1,19 +1,4 @@
-/*
-import { Link } from "react-router-dom";
-
 export default function Dashboard() {
-  return (
-    <div className="p-5">
-      <h1 className="text-3xl font-bold mb-4">Dashboard</h1>
-      <Link to="/fields" className="text-blue-500 underline">Go to Fields</Link>
-    </div>
-  );
-}
-*/
-import { useContext } from "react";
-import { AuthContext } from "../context/AuthContext";
-export default function Dashboard() {
-  const { logout } = useContext(AuthContext);
   return (
     <div className="max-w-4xl mx-auto">
       <h2 className="text-2xl font-bold text-green-800 mb-4">Dashboard</h2>
