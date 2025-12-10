@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
-import MediaUpload from "../components/MediaUpload";
 
 
 export default function MyFields() {
@@ -9,6 +8,11 @@ export default function MyFields() {
   const [stats, setStats] = useState({});
   const [photos, setPhotos] = useState([]);
   const [uploadFieldId, setUploadFieldId] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const [galleryModal, setGalleryModal] = useState(null);
+  const [deletingPhoto, setDeletingPhoto] = useState(null);
+  const [zoomModal, setZoomModal] = useState(null);
 
   const navigate = useNavigate();
   const currentYear = new Date().getFullYear();
@@ -52,10 +56,58 @@ export default function MyFields() {
     }
   }
 
-  const handleMediaAdded = (media) => {
-    setPhotos((prev) => [...prev, media]);
+  /* ========================= Upload Media ========================= */
+  const handleMediaUpload = async (fieldId, files) => {
+    if (files.length === 0) return alert("Pick at least one file");
+    
+    for (const file of files) {
+      const form = new FormData();
+      form.append("media", file);
+      form.append("fieldId", fieldId);
+      form.append("gps", JSON.stringify({}));
+
+      try {
+        const { data } = await api.post("/upload/media", form, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        setPhotos((prev) => [...prev, data]);
+      } catch (err) {
+        console.error("Upload error:", err);
+        alert(`Upload failed for ${file.name}`);
+      }
+    }
     setUploadFieldId(null);
   };
+
+  /* ========================= Delete Photo ========================= */
+  async function deletePhoto(photoId) {
+    setDeletingPhoto(photoId);
+    try {
+      await api.delete(`/upload/photos/${photoId}`);
+      setPhotos((prev) => prev.filter((p) => p._id !== photoId));
+    } catch (err) {
+      console.error("Error deleting photo:", err);
+      alert("Failed to delete photo");
+    } finally {
+      setDeletingPhoto(null);
+    }
+  }
+
+  /* ========================= Delete Field ========================= */
+  async function deleteFieldHandler(fieldId) {
+    setDeleting(true);
+    try {
+      await api.delete(`/fields/${fieldId}`);
+      setFields((prev) => prev.filter((f) => f._id !== fieldId));
+      setPhotos((prev) => prev.filter((p) => p.fieldId !== fieldId));
+      setDeleteConfirm(null);
+    } catch (err) {
+      console.error("Error deleting field:", err);
+      alert("Failed to delete field");
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   /* ======================= Render ======================= */
 
@@ -90,7 +142,9 @@ export default function MyFields() {
           </p>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {fields.map((field) => (
+            {fields.map((field) => {
+              const fieldPhotos = photos.filter((p) => p.fieldId === field._id);
+              return (
               <div
                 key={field._id}
                 className="bg-white shadow-md rounded-xl p-5 relative"
@@ -158,36 +212,31 @@ export default function MyFields() {
                   ✏️ Edit {currentYear}
                 </button>
 
-                {/* MEDIA UPLOAD BUTTON */}
+                {/* UPLOAD MEDIA BUTTON */}
                 <button
                   onClick={() => setUploadFieldId(field._id)}
                   className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded mb-3 w-full"
                 >
-                  Upload Media
+                  📸 Upload Media
                 </button>
 
-                {/* MEDIA PREVIEW */}
-                <div className="grid grid-cols-2 gap-2">
-                  {photos
-                    .filter((p) => p.fieldId === field._id)
-                    .slice(0, 4)
-                    .map((p) =>
-                      p.isVideo ? (
-                        <video
-                          key={p._id}
-                          src={`http://localhost:5000${p.url}`}
-                          className="w-full h-24 object-cover rounded"
-                        />
-                      ) : (
-                        <img
-                          key={p._id}
-                          src={`http://localhost:5000${p.url}`}
-                          className="w-full h-24 object-cover rounded"
-                          alt=""
-                        />
-                      )
-                    )}
-                </div>
+                {/* GALLERY BUTTON */}
+                {fieldPhotos.length > 0 && (
+                  <button
+                    onClick={() => setGalleryModal(field._id)}
+                    className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded mb-3 w-full"
+                  >
+                    🖼️ Gallery ({fieldPhotos.length})
+                  </button>
+                )}
+
+                {/* DELETE BUTTON */}
+                <button
+                  onClick={() => setDeleteConfirm(field._id)}
+                  className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded mb-3 w-full"
+                >
+                  🗑️ Delete Field
+                </button>
 
                 {/* Media Upload Modal */}
                 {uploadFieldId === field._id && (
@@ -200,15 +249,136 @@ export default function MyFields() {
                         ✕
                       </button>
 
-                      <MediaUpload
-                        fieldId={field._id}
-                        onMedia={handleMediaAdded}
+                      <h3 className="text-lg font-semibold mb-4">Upload Media</h3>
+                      <input
+                        type="file"
+                        multiple
+                        accept="image/*,video/*"
+                        onChange={(e) => handleMediaUpload(field._id, Array.from(e.target.files))}
+                        className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                       />
                     </div>
                   </div>
                 )}
+
+                {/* Gallery Modal */}
+                {galleryModal === field._id && (
+                  <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
+                    <div className="bg-white rounded-lg shadow-lg max-w-2xl w-full p-6 relative max-h-96 overflow-y-auto">
+                      <button
+                        onClick={() => {
+                          setGalleryModal(null);
+                          setZoomModal(null);
+                        }}
+                        className="absolute top-2 right-2 text-gray-500 hover:text-gray-800 text-xl"
+                      >
+                        ✕
+                      </button>
+
+                      <h3 className="text-xl font-semibold mb-4">Gallery</h3>
+                      
+                      {/* Zoomed view */}
+                      {zoomModal ? (
+                        <div className="flex flex-col items-center gap-4">
+                          <button
+                            onClick={() => setZoomModal(null)}
+                            className="self-start text-blue-600 hover:text-blue-800 mb-2"
+                          >
+                            ← Back to Gallery
+                          </button>
+
+                          <div className="w-full flex items-center justify-center bg-gray-100 rounded p-4">
+                            {zoomModal.isVideo ? (
+                              <video
+                                src={zoomModal.url}
+                                controls
+                                className="max-h-96 max-w-full"
+                              />
+                            ) : (
+                              <img
+                                src={zoomModal.url}
+                                alt="Zoomed"
+                                className="max-h-96 max-w-full"
+                              />
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                          {fieldPhotos.map((photo) => (
+                            <div
+                              key={photo._id}
+                              className="relative group cursor-pointer"
+                              onClick={() => setZoomModal(photo)}
+                            >
+                              {photo.isVideo ? (
+                                <div className="relative">
+                                  <video
+                                    src={photo.url}
+                                    className="w-full h-32 object-cover rounded"
+                                  />
+                                  <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 rounded group-hover:bg-opacity-50">
+                                    <span className="text-white text-2xl">▶</span>
+                                  </div>
+                                </div>
+                              ) : (
+                                <img
+                                  src={photo.url}
+                                  className="w-full h-32 object-cover rounded group-hover:opacity-75"
+                                  alt="Field media"
+                                />
+                              )}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  deletePhoto(photo._id);
+                                }}
+                                disabled={deletingPhoto === photo._id}
+                                className="absolute top-1 right-1 bg-red-600 text-white rounded-full w-7 h-7 flex items-center justify-center opacity-0 group-hover:opacity-100 transition disabled:opacity-50"
+                                title="Delete photo"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Delete Confirmation Modal */}
+                {deleteConfirm === field._id && (
+                  <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50 p-4">
+                    <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
+                      <h3 className="text-lg font-semibold text-gray-800 mb-3">
+                        Delete Field?
+                      </h3>
+                      <p className="text-gray-600 mb-6">
+                        Are you sure you want to delete "{field.name}"? This action cannot be undone.
+                      </p>
+                      <div className="flex gap-3">
+                        <button
+                          onClick={() => setDeleteConfirm(null)}
+                          disabled={deleting}
+                          className="flex-1 bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400 disabled:opacity-50"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={() => deleteFieldHandler(field._id)}
+                          disabled={deleting}
+                          className="flex-1 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 disabled:opacity-50"
+                        >
+                          {deleting ? "Deleting..." : "Delete"}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
-            ))}
+            );
+            })}
           </div>
         )}
       </div>

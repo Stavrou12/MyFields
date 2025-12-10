@@ -84,4 +84,27 @@ router.get("/photos", async (_req, res) => {
   }
 });
 
+/* ========================================================
+    DELETE PHOTO
+    DELETE /upload/photos/:photoId
+    auth required
+======================================================== */
+router.delete("/photos/:photoId", auth, async (req, res) => {
+  try {
+    const photo = await Photo.findByIdAndDelete(req.params.photoId);
+    
+    if (!photo) {
+      return res.status(404).json({ msg: "Photo not found" });
+    }
+
+    // Optionally delete from Cloudinary using public_id extracted from URL
+    // For now, we'll just delete from DB
+    
+    res.json({ msg: "Photo deleted successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Delete failed" });
+  }
+});
+
 module.exports = router;
