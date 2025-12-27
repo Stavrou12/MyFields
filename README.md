@@ -148,17 +148,10 @@ We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.
 - Submitting pull requests
 - Code style guidelines
 
-## 📞 Support
-
-If you need help:
-
-- Check the [Issues](https://github.com/your-repo/issues) page for common problems
-- Create a new issue with detailed information about your problem
-- Contact the maintainers for direct support
 
 ## 👥 Maintainers
 
-- **Your Name** - [your-email@example.com](mailto:your-email@example.com)
+- **Your Name** - [gnnsstavrou81@gmail.com]
 
 ## 📄 License
 
